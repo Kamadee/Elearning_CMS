@@ -1,0 +1,52 @@
+<?php
+return [
+  'course_management' => 'Quản lý khóa học',
+  'id' => 'Mã khóa học',
+  'name' => 'Tên khóa học',
+  'title' => 'Tên khóa học',
+  'author' => 'Tác giả',
+  'course_duration' => 'Thời lượng',
+  'description' => 'Mô tả',
+  'content' => 'Nội dung',
+  'thumbnail' => 'Ảnh hiển thị',
+  'banner' => 'Ảnh bìa lớn',
+  'course_category' => 'Danh mục',
+  'course_tag' => 'Gắn thẻ',
+  'status' => 'Trạng thái',
+  'action' => 'Thao tác',
+  'created_at' => 'Ngày tạo',
+  'updated_at' => 'Ngày cập nhật',
+  'filter_category' => 'Tìm kiếm theo danh mục',
+  'filter_status' => 'Tìm kiếm theo trạng thái',
+  'detail_course' => 'Chi tiết',
+  'create_course' => 'Tạo mới khóa học',
+  'update_course' => 'Cập nhật thông tin',
+  'delete_course' => 'Xóa',
+  'original_price' => 'Giá gốc',
+  'sale_off_price' => 'Giá khuyến mại',
+  'video_selection' => 'Chọn video',
+  'status_list' => [
+    1 => 'Hiển thị',
+    2 => 'Ẩn'
+  ],
+  'ck_editor_header' => 'Trình soạn thảo HTML',
+  'filter_category_placeholder' => 'Chọn danh mục',
+  'filter_status_placeholder' => 'Chọn trạng thái khóa học',
+  'form_placeholder' => [
+    'name_placeholder' => 'Nhập tiêu đề khóa học',
+    'description_placeholder' => 'Nhập mô tả',
+    'tag_placeholder' => 'Chọn thẻ',
+    'category_placeholder' => 'Chọn danh mục',
+    'status_placeholder' => 'Chọn trạng thái',
+  ],
+  'btn_confirm' => 'Xác nhận',
+  'btn_cancel' => 'Hủy',
+  'message' => [
+    'create_course_success' => 'Tạo mới khóa học thành công',
+    'update_course_success' => 'Cập nhật khóa học mã số ":id" thành công',
+    'delete_course_confirm' => 'Xác nhận xóa khóa học :roomName ?',
+    'delete_course_confirm_js' => 'Xác nhận xóa khóa học',
+    'course_not_found' => 'Không tìm thấy khóa học trong hệ thống',
+    'delete_course_success' => 'Xóa khóa học thành công !'
+  ]
+];

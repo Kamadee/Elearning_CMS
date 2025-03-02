@@ -13,11 +13,14 @@ return [
     |
     */
 
+    // 'defaults' => [
+    //     'guard' => env('AUTH_GUARD', 'web'),
+    //     'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+    // ],
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        'guard' => 'web',
+        'passwords' => 'users',
     ],
-
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards
@@ -42,15 +45,17 @@ return [
     //     ],
     // ],
     'guards' => [
-        // 'web' => [
-        //     'driver' => 'session',
-        //     'provider' => 'users',
-        // ],
+        'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
         'api' => [
             'driver' => 'token',
             'provider' => 'customers',
             'hash' => false,
         ],
+
         'customer' => [
             'driver' => 'jwt',
             'provider' => 'customers',
@@ -73,6 +78,10 @@ return [
     |
     */
     'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
         'customers' => [
             'driver' => 'eloquent',
             'model' => App\Models\Customer::class,
@@ -116,6 +125,12 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+        'customers' => [
+            'provider' => 'customers',
+            'table' => 'password_resets',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
     ],
 
     /*
@@ -129,6 +144,6 @@ return [
     |
     */
 
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+    'password_timeout' => 10800,
 
 ];

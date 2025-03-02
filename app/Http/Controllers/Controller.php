@@ -36,4 +36,16 @@ class Controller extends BaseController
             'message' => __('error')[ResponseCode::$INTERNAL_ERROR]
         ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
+    public function createdSuccessResponse()
+    {
+        return response()->json([
+            'message' => ResponseCode::$CREATED,
+        ], Response::HTTP_OK);
+    }
+    public function deletedSuccessResponse()
+    {
+        return response()->json([
+            'message' => ResponseCode::$DELETED,
+        ], Response::HTTP_OK);
+    }
 }

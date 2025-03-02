@@ -10,4 +10,6 @@ class ResponseCode
   public static $SUCCESS = 'Success';
   public static $NOT_FOUND = 'NotFound';
   public static $INTERNAL_ERROR = 'InternalError';
+  public static $UNAUTHORIZED = 'UnAuthorized';
+  public static $CUSTOMER_NOT_ENABLE = 'CustomerNotEnable';
 }
