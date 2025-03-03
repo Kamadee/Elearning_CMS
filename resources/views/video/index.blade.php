@@ -17,10 +17,13 @@
       <div class="card-header">
         <div class="row mb-2">
           <div class="col">
-            @if(\App\Helpers\Helper::checkPermission('video.create'))
-            <a href="{{ route('video.create') }}" class="btn btn-primary">
-              <i class="fas fa-plus"></i> {{__('video.upload_video')}}
-            </a>
+            @if(\App\Helpers\Helper::checkPermission('video.upload'))
+            <div class="ml-auto">
+              <button class="btn btn-info fetch_thumbnail_btn">{{ __('video.fetch_thumbnail') }}</button>
+              <a href="{{ route('video.create') }}">
+                <button class="btn btn-success">{{ __('video.upload_video') }}</button>
+              </a>
+            </div>
             @endif
           </div>
         </div>
@@ -123,6 +126,29 @@
         columns: columnDefs
       });
     }
+
+
+
+    function uploadVimeoThumbnail() {
+      $.ajax({
+        url: '/video/vimeo/thumbnail',
+        type: 'GET',
+        success: function(response) {
+          if (response.status) {
+            location.reload()
+          } else {
+            Swal.fire('fail!', response.message, '')
+          }
+        }
+      });
+    }
+
+    $(".fetch_thumbnail_btn").on("click", function(e) {
+      e.preventDefault();
+      console.log(1111);
+
+      uploadVimeoThumbnail();
+    });
 
     // Xem video
     function showVideoDetail(vimeoId) {

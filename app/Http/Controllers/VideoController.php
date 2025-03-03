@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Yajra\Datatables\Datatables;
 use Vimeo\Laravel\Facades\Vimeo;
+use Illuminate\Support\Facades\DB;
 
 class VideoController extends Controller
 {
@@ -90,16 +91,35 @@ class VideoController extends Controller
     return view('video.process');
   }
 
-  public function deleteVideo(Request $request)
+  public function fetchVimeoThumbnail()
   {
-    $validator = VideoUploading::where('vimeo_id', $request->id);
-    if (!$validator) {
+    DB::beginTransaction();
+    try {
+      $this->videoServices->updateThumbnail();
+      DB::commit();
+      return ([
+        'status' => true,
+        'data' => [],
+        'message' => 'success'
+      ]);
+    } catch (\Exception $e) {
+      DB::rollBack();
       return [
         'status' => false,
-        'message' => __('video.message.video_not_found')
+        'message' => $e->getMessage()
       ];
     }
-    $vimeoId = $request->id;
-    return $this->videoServices->processDeleteVideo($vimeoId);
   }
+
+  // public function deleteVideo(Request $request)
+  // {
+  //   $validator = VideoUploading::where('id', $request->id);
+  //   if (!$validator) {
+  //     return [
+  //       'status' => false,
+  //       'message' => __('video.message.video_not_found')
+  //     ];
+  //   }
+  //   return $this->videoServices->processDeleteVideo($request->id);
+  // }
 }

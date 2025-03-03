@@ -75,15 +75,12 @@ class VideoServices
       })
       ->addColumn('videoThumbnail', function ($row) {
         if (!empty($row->thumbnail_id)) {
-          return $row->thumbnail_id ? '<img class="row-img" src="' . url('images/default_image.jpg') . '" alt="">' : '';
+          return '<img style="width: 120px;height: 120px;" src="' . $row->thumbnail_id . '" />';
         }
-        return $row->thumbnail_id ? '<img class="row-img" src="' . $row->thumbnail_id . '" alt="">' : '';
+        return '<img style="width: 120px;height: 120px;" src="' . url('/images/default_image.jpg') . '" />';
       })
       ->addColumn('action', function ($row) {
-        $action = '';
-        $action .= '<button type="button" class="btn btn-block btn-info btn-info-video" style="width: 130px;" video-id="' . $row->vimeo_id . '">Xem video</button>';
-        $action .= '<button data-id="' . $row->id . '" data-name="' . $row->video_id . '" class="btn-delete-video btn btn-danger btn-sm">' . __('video.message.delete_video_btn') . '</button>';
-        return $action;
+        return '<button type="button" class="btn btn-block btn-info btn-info-video" style="width: 130px;" video-id="' . $row->vimeo_id . '">Xem video</button>';
       })
       ->rawColumns(['action', 'videoThumbnail'])
       ->make(true);
@@ -202,7 +199,8 @@ class VideoServices
   public function processDeleteVideo($id)
   {
     try {
-      $video = VideoUploading::where('vimeo_id', $id)->first();
+      $video = VideoUploading::where('id', $id)->first();
+      dd($video);
       if ($video) {
         $clientId = env('VIMEO_CLIENT');
         $clientSecret = env('VIMEO_SECRET');
@@ -220,6 +218,35 @@ class VideoServices
         'status' => false,
         'message' => $e->getMessage()
       ];
+    }
+  }
+
+  public function updateThumbnail()
+  {
+    $videoNullThumbnailData = VideoUploading::whereNotNull('vimeo_id')
+      ->whereNull('thumbnail_id')
+      ->orWhere('thumbnail_id', '')
+      ->get()
+      ->toArray();
+
+    if (!empty($videoNullThumbnailData)) {
+      foreach ($videoNullThumbnailData as $videoNullThumbnail) {
+        $thumbnailApiLink = "/videos/" . $videoNullThumbnail['vimeo_id'] . "/pictures";
+        $vimeoThumbnail = Vimeo::request($thumbnailApiLink, ['per_page' => 1], 'GET');
+
+        // Kiểm tra xem có dữ liệu thumbnail không
+        if (!empty($vimeoThumbnail['body']['data']) && count($vimeoThumbnail['body']['data']) > 0) {
+          // Lấy URL thumbnail
+          $thumbnailUrl = empty($vimeoThumbnail['body']['data'][0]['base_link'])
+            ? $vimeoThumbnail['body']['data'][0]['link']
+            : $vimeoThumbnail['body']['data'][0]['base_link'];
+
+          // Cập nhật thumbnail cho video tương ứng
+          VideoUploading::where('id', $videoNullThumbnail['id'])->update([
+            'thumbnail_id' => $thumbnailUrl
+          ]);
+        }
+      }
     }
   }
 }
