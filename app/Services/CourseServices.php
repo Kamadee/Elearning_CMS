@@ -5,85 +5,363 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Helpers\Helper;
 use App\Models\Course;
+use App\Models\CourseVideo;
+use App\Models\CourseCategoryPivot;
+use App\Models\CourseTag;
 use App\Models\HotContent;
 use App\Models\Order;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Yajra\Datatables\Datatables;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CourseServices
 {
-  public function formatCourseDatatables($filterData)
+  public function formatCourseDatatables($data)
   {
-    return Datatables::of($filterData)
-      ->addIndexColumn()
-      ->addColumn('courseThumbnail', function ($row) {
-        return $row->thumbnail ? '<img class="row-img" src="' . $row->thumbnail . '" alt="">' : '';
-      })
-      ->addColumn('courseBanner', function ($row) {
-        return $row->banner ? '<img class="row-img" src="' . $row->banner . '" alt="">' : '';
-      })
-      ->addColumn('courseCategory', function ($row) {
-        if ($row->courseCategory) {
-          $html = '';
-          foreach ($row->courseCategory as $category) {
-            $html .= '<span class="badge bg-success mr-1">' . $category->category_name . '</span>';
-          }
-          return $html;
+    return Datatables::of($data)
+    ->addIndexColumn()
+    ->addColumn('courseStatus', function ($row) {
+        return __('course.status_list')[$row->status];
+    })
+    ->addColumn('courseThumbnail', function ($row) {
+        if (!empty($row->thumbnail)) {
+            return '<img style="width: 120px" src="' . $row->thumbnail . '" />';
+        }
+        return '<img style="width: 120px" src="' . url('/images/default_image.png') . '" />';
+    })
+    ->addColumn('courseBanner', function ($row) {
+        return '<img style="width: 120px" src="' . $row->banner . '" />';
+    })
+    ->addColumn('originalPrice', function ($row) {
+        return Helper::convertMoney($row->original_price);
+    })
+    ->addColumn('saleOffPrice', function ($row) {
+        return Helper::convertMoney($row->sale_off_price);
+    })
+    ->addColumn('courseCategory', function ($row) {
+        if ($row->courseCategories) {
+            $html = '';
+            foreach ($row->courseCategories as $category) {
+                $html .= '<span class="badge bg-success mr-1">' . $category->category_name . '</span>';
+            }
+            return $html;
         }
         return '';
-      })
-      ->addColumn('courseStatus', function ($row) {
-        $statusList = __('course.status');
-        return isset($statusList[$row->status]) ? $statusList[$row->status] : 'Unknown';
-        // return __('customer.status_list')[$row->status];
-      })
-      ->addColumn('action', function ($row) {
+    })
+    ->addColumn('action', function ($row) {
         $action = '';
         if (Helper::checkPermission('course.edit')) {
-          $action .= '<a href="/courses/detail/' . $row->id . '" class="edit btn btn-primary btn-sm">' . __('course.update_course') . '</a>';
+            $action .= '<a href="/courses/detail/' . $row->id . '" class="edit btn btn-primary btn-sm mr-1">' . __('course.detail_course') . '</a>';
         }
-        $action .= '<button data-id="' . $row->id . '" data-name="' . $row->title . '" class="btn-delete-course btn btn-danger btn-sm">' . __('course.delete_course') . '</button>';
+        if (Helper::checkPermission('course.delete')) {
+            $action .= '<button data-id="' . $row->id . '" data-name="' . $row->title . '" class="btn-delete-course btn btn-danger btn-sm">' . __('course.delete_course') . '</button>';
+        }
         return $action;
-      })
-      ->rawColumns(['action', 'courseThumbnail', 'courseBanner', 'courseCategory', 'courseStatus'])
-      ->make(true);
+    })
+    ->rawColumns(['action', 'courseCategory', 'courseThumbnail', 'courseBanner'])
+    ->make(true);
   }
-  public function processUploadImage() {}
-  public function processSaveFileToStorage() {}
+  public function processUploadImage($image)
+  {
+    return $this->processSaveFileToStorage($image);
+  }
+
+  public function processSaveFileToStorage($image)
+  {
+    $fileImage = time() . '_' . $image->getClientOriginalName();
+    $image->move(public_path('uploads'), $fileImage);
+    return '/uploads/' . $fileImage;
+  }
+
   public function createHotCourseList() {}
 
-  public function processCreateCourse() {}
+  public function processCreateCourse($formData)
+  {
+    try {
+      $imageThumbnailUrl = [];
+      if (isset($formData['input-pd']) && count($formData['input-pd']) > 0) {
+        foreach ($formData['input-pd'] as $thumbnail) {
+          $imageThumbnailUrl[] = $this->processSaveFileToStorage($thumbnail);
+        }
+      }
+      $imageBannerUrl = [];
+      if (isset($formData['input-banner-pd']) && count($formData['input-banner-pd']) > 0) {
+        foreach ($formData['input-banner-pd'] as $banner) {
+          $imageBannerUrl[] = $this->processSaveFileToStorage($banner);
+        }
+      }
+      $courseData = [
+        'title' => $formData['title'],
+        'description' => $formData['description'],
+        'thumbnail' => isset($imageThumbnailUrl[0]) ? $imageThumbnailUrl[0] : null,
+        'banner' => isset($imageBannerUrl[0]) ? $imageBannerUrl[0] : null,
+        'author' => $formData['author'],
+        'authorDescription' => $formData['authorDescription'],
+        'course_duration' => $formData['courseDuration'],
+        'content' => $formData['content'],
+        'status' => $formData['status'],
+        'original_price' => $formData['originalPrice'] ? Helper::convertMoneyToNumber($formData['originalPrice']) : 0,
+        'sale_off_price' => $formData['saleOffPrice'] ? Helper::convertMoneyToNumber($formData['saleOffPrice']) : 0,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ];
+      // dd($postData);
+      DB::beginTransaction();
+      $courseId = Course::insertGetId($courseData);
+      if (isset($formData['courseCategories'])) {
+        $dataCategories = [];
+        foreach ($formData['courseCategories'] as $category) {
+          $dataCategories[] = [
+            'course_id' => $courseId,
+            'post_category_id' => $category
+          ];
+          // dd($dataCategories);
+          CourseCategoryPivot::insert($dataCategories);
+        }
+      }
 
-  public function processUpdateCourse() {}
+      if (isset($formData['courseTags'])) {
+        $dataTags = [];
+        foreach ($formData['courseTags'] as $tag) {
+          $dataTags[] = [
+            'course_id' => $courseId,
+            'tag_id' => $tag
+          ];
+          CourseTag::insert($dataTags);
+        }
+      }
 
-  public function processDeleteThumbnailImage() {}
+    //   if (!empty($formData['video-list'])) {
+    //     $videoDataToSave = [];
+    //     $videoList = json_decode($formData['video-list']);
+    //     if (!empty($videoList)) {
+    //         foreach ($videoList as $video) {
+    //             $videoDataToSave[] = [
+    //                 'course_id' => $courseId,
+    //                 'video_title' => $video->epTitle,
+    //                 'video_description' => $video->epDescription,
+    //                 'vimeo_id' => $video->vimeoId,
+    //                 'video_thumbnail' => $video->epThumbnail,
+    //                 'created_at' => Carbon::now()->toDateTimeString(),
+    //                 'created_at' => Carbon::now()->toDateTimeString(),
+    //             ];
+    //         }
+    //     }
+    //     CourseVideo::insert($videoDataToSave);
+    // }
+
+      DB::commit();
+      return [
+        'status' => true,
+        'message' => 'success',
+        'id' => $courseId
+      ];
+    } catch (\Exception $e) {
+      DB::rollback();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function processUpdateCourse($id, $formData) {
+    try {
+      $thumbnailUrls = [];
+      if (isset($formData['input-pd']) && count($formData['input-pd']) > 0) {
+        foreach ($formData['input-pd'] as $thumbnail) {
+          $thumbnailUrls[] = $this->processSaveFileToStorage($thumbnail);
+        }
+      }
+      $bannerUrls = [];
+      if (isset($formData['input-banner-pd']) && count($formData['input-banner-pd']) > 0) {
+        foreach ($formData['input-banner-pd'] as $banner) {
+          $bannerUrls[] = $this->processSaveFileToStorage($banner);
+        }
+      }
+      $currentData = Course::find($id);
+      $courseData = [
+        'title' => isset($formData['title']) ? $formData['title'] : $currentData->title,
+        'description' => isset($formData['description']) ? $formData['description'] : $currentData->description,
+        'author' => isset($formData['author']) ? $formData['author'] : $currentData->author,
+        'authorDescription' => isset($formData['authorDescription']) ? $formData['authorDescription'] : $currentData->authorDescription,
+        'course_duration' => isset($formData['courseDuration']) ? $formData['courseDuration'] : $currentData->course_duration,
+        'content' => isset($formData['content']) ? $formData['content'] : $currentData->content,
+        'status' => isset($formData['status']) ? $formData['status'] : $currentData->status,
+        'original_price' => isset($formData['originalPrice']) ? Helper::convertMoneyToNumber($formData['originalPrice']) : $currentData->original_price,
+        'sale_off_price' => isset($formData['saleOffPrice']) ? Helper::convertMoneyToNumber($formData['saleOffPrice']) : $currentData->sale_off_price,
+        'updated_at' => Carbon::now()
+      ];
+
+      if(count($thumbnailUrls) > 0) {
+        $courseData['thumbnail'] = $thumbnailUrls[0];
+      }
+
+      if(count($bannerUrls) > 0) {
+        $courseData['banner'] = $bannerUrls[0];
+      }
+      DB::beginTransaction();
+
+      Course::where('id', $id)->update($courseData);
+
+      if (isset($formData['courseCategories'])) {
+        $dataCategories = [];
+        foreach ($formData['courseCategories'] as $category) {
+          $dataCategories[] = [
+            'course_id' => $id,
+            'post_category_id' => $category
+          ];
+          // dd($dataCategories);
+          CourseCategoryPivot::where('course_id', $id)->delete();
+          CourseCategoryPivot::insert($dataCategories);
+        }
+      }
+
+      if (isset($formData['courseTags'])) {
+        $dataTags = [];
+        foreach ($formData['courseTags'] as $tag) {
+          $dataTags[] = [
+            'course_id' => $id,
+            'tag_id' => $tag
+          ];
+          CourseTag::insert($dataTags);
+        }
+      }
+
+      // CourseVideo::where('course_id', $id)->delete();
+      //   if(!empty($formData['video-list'])) {
+      //     $courseVideoData = [];
+      //     $videoList = json_decode($formData['video-list']);
+      //     if(!empty($videoList)) {
+      //       foreach($videoList as $video) {
+      //         $courseVideoData[] = [
+      //           'course_id' => $id,
+      //           'video_title' => $video->epTitle,
+      //           'video_description' => $video->epDescription,
+      //           'vimeo_id' => $video->vimeoId,
+      //           'video_thumbnail' => $video->epThumbnail,
+      //           'updated_at' => Carbon::now()->toDateTimeString(),
+      //         ];
+      //       }
+      //       CourseVideo::insert($courseVideoData);
+      //     }
+      //   }
+      DB::commit();
+      return [
+        'status' => true,
+        'message' => 'success',
+      ];
+    } catch (\Exception $e) {
+      DB::rollback();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function deleteFileFromStorage($filePath)
+  {
+    $fullPath = public_path($filePath);
+
+    if (file_exists($fullPath)) {
+      unlink($fullPath);
+    } else {
+      Log::error("File not found: " . $fullPath);
+    }
+  }
+
+  public function processDeleteImage($id) {
+    try {
+      $course = Course::find($id);
+      DB::beginTransaction();
+      if ($course && $course->thumbnail) {
+        $oldThumbnail = $course->thumbnail;
+        $course->thumbnail = null;
+        $this->deleteFileFromStorage($oldThumbnail);
+      }
+      if ($course && $course->banner) {
+        $oldBanner = $course->banner;
+        $course->banner = null;
+        $this->deleteFileFromStorage($oldBanner);
+      }
+      $course->save();
+      DB::commit();
+      return [
+        'status' => true,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollback();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
   public function processDeleteBannerImage() {}
   public function deleteLocalPublicFile() {}
-  public function processDeleteCourse() {}
+  public function processDeleteCourse($courseId) {
+    try {
+      DB::beginTransaction();
+      $course = Course::find($courseId);
+      $thumbnail = $course->thumbnail;
+      $banner = $course->banner;
+      $course->courseTags()->detach();
+      $course->courseCategories()->detach();
+      $course->videos()->delete();
+      $course->delete();
+      DB::commit();
+      if ($thumbnail) {
+        $this->deleteFileFromStorage($thumbnail);
+      }
+      if ($banner) {
+        $this->deleteFileFromStorage($banner);
+      }
+      return [
+        'status' => true,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollback();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
   public function processUploadImageToS3() {}
 
   public function getCourses($filterData)
   {
-    $queries = Course::with(['courseCategories']);
+    $queries = Course::with(['courseCategories', 'courseTags'])->get();
     if (isset($filterData['courseCategories']) && count($filterData['courseCategories']) > 0) {
-      $queries->whereHas('courseCategories', function ($q) use ($filterData) {
-        return $q->where('category_name', $filterData['courseCategories']);
-      });
-    }
-    if (isset($filterData['statusList']) && count($filterData['statusList']) > 0) {
-      return $queries->whereIn('status', $filterData['statusList']);
-    }
-    if (isset($filterData['keyword'])) {
-      $queries->where(function ($q) use ($filterData) {
-        $likeStr = '%' . Helper::escapeLike($filterData['keyword']) . '%';
-        $q->where('courses.title', 'like', $likeStr)
-          ->orWhere('courses.description', 'like', $likeStr)
-          ->orWhere('courses.author', 'like', $likeStr);
-      });
+        $queries->whereHas('courseCategories', function ($q) use ($filterData) {
+            return $q->whereIn('post_categories.id', $filterData['courseCategories']);
+        });
     }
 
+    if (isset($filterData['tags']) && count($filterData['tags']) > 0) {
+        $queries->whereHas('courseTags', function ($q) use ($filterData) {
+            return $q->whereIn('tags.id', $filterData['tags']);
+        });
+    }
+
+    if (isset($filterData['statusList']) && count($filterData['statusList']) > 0) {
+        $queries->whereIn('status', $filterData['statusList']);
+    }
+
+    if (isset($filterData['keyword'])) {
+        $queries->where(function ($q) use ($filterData) {
+            $likeStr = '%' . Helper::escapeLike($filterData['keyword']) . '%';
+            $q->where('courses.title', 'like', $likeStr)
+                ->orWhere('courses.description', 'like', $likeStr)
+                ->orWhere('courses.content', 'like', $likeStr);
+        });
+    }
     return $queries;
   }
 

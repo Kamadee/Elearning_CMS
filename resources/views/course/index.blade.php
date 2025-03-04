@@ -39,8 +39,8 @@
             <label>{{ __('course.filter_status') }}</label>
             <select id="course-status-filter" class="select2 form-control" multiple="multiple"
               data-placeholder="{{ __('course.filter_status_placeholder') }}" style="width: 100%;">
-              @foreach($statusList as $id => $status)
-              <option value="{{ $id }}">{{ __('post.status_list')[$id] }}</option>
+              @foreach($courseStatus as $id => $status)
+              <option value="{{ $id }}">{{ __('course.status_list')[$id] }}</option>
               @endforeach
             </select>
           </div>
@@ -52,19 +52,17 @@
         <table class="table table-bordered" id="course-table">
           <thead>
             <tr>
-              <th>{{__('course.id')}}</th>
-              <th>{{__('course.thumbnail')}}</th>
-              <th>{{__('course.title')}}</th>
-              <th>{{__('course.banner')}}</th>
-              <th>{{__('course.author')}}</th>
-              <th>{{__('course.description')}}</th>
-              <th>{{__('course.course_category')}}</th>
-              <th>{{__('course.course_duration')}}</th>
-              <th>{{__('course.original_price')}}</th>
-              <th>{{__('course.sale_off_price')}}</th>
-              <th class="status">{{__('course.status')}}</th>
-              <th>{{__('course.created_at')}}</th>
-              <th>{{__('course.action')}}</th>
+                <th>{{__('course.id')}}</th>
+                <th>{{__('course.title')}}</th>
+                <th>{{__('course.banner')}}</th>
+                <th>{{__('course.author')}}</th>
+                <th>{{__('course.course_category')}}</th>
+                <th>{{__('course.course_duration')}}</th>
+                <th>{{__('course.original_price')}}</th>
+                <th>{{__('course.sale_off_price')}}</th>
+                <th class="status">{{__('course.status')}}</th>
+                <th>{{__('course.created_at')}}</th>
+                <th>{{__('course.action')}}</th>
             </tr>
           </thead>
         </table>
@@ -88,12 +86,6 @@
         "searchable": true
       },
       {
-        data: 'courseThumbnail',
-        name: 'thumbnail',
-        "searchable": false,
-        'sortable': false
-      },
-      {
         data: 'title',
         name: 'title',
         "searchable": true
@@ -107,11 +99,6 @@
       {
         data: 'author',
         name: 'author',
-        "searchable": true
-      },
-      {
-        data: 'description',
-        name: 'description',
         "searchable": true
       },
       {
@@ -174,10 +161,7 @@
       $("#course-table").dataTable().fnDestroy();
       const courseCategories = $('#course-category-filter').val();
       const statusList = $('#course-status-filter').val();
-      console.log('Filter data:', {
-        courseCategories,
-        statusList
-      }, typeof(courseCategories), typeof(statusList));
+
       const dataFilter = {
         courseCategories,
         statusList
@@ -204,7 +188,7 @@
 
     function handleDelCourse(courseId) {
       $.ajax({
-        url: '/courses/delete/' + postId,
+        url: '/courses/delete/' + courseId,
         type: 'delete',
         data: {
           "_token": $('meta[name="csrf-token"]').attr('content'),
@@ -226,7 +210,9 @@
     $('#course-table').on('click', '.btn-delete-course', function(e) {
       e.preventDefault();
       const id = $(this).data('id')
-      const name = $(this).data('name')
+      console.log(id);
+
+      const name = $(this).data('name') // video_id
       const msgConfirmDelete = "<?php echo __('course.message.delete_course_confirm_js'); ?>" + ' ' + name + ' ?'
       Swal.fire({
         title: msgConfirmDelete,

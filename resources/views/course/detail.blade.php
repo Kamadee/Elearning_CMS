@@ -8,7 +8,7 @@
 @stop
 
 @section('content')
-@include('course.form', ['course' => $course, 'courseCategoryList' => $courseCategoryList, 'courseStatus' => $courseStatus, 'tagList' => $tagList])
+@include('course.form', ['course' => $course, 'categoryList' => $categoryList , 'courseStatus' => $courseStatus, 'tagList' => $tagList])
 @include('common.loadingSpinner')
 @stop
 @section('css')
@@ -19,14 +19,8 @@
   }
 </style>
 @stop
-@section('js')
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/smoothness/jquery-ui.css">
-<!-- <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-<script src="https://code.jquery.com/ui/1.13.3/jquery-ui.js"></script> -->
-<script type="text/javascript" src="{{ URL::asset('plugins/ckeditor/ckeditor.js') }}"></script>
+@section('js')>
 <script src="{{ asset('/js/util.js') }}"></script>
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/smoothness/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.13.3/jquery-ui.js"></script>
 <script>
   const editor = CKEDITOR.replace('content', {
     fileTools_requestHeaders: {
@@ -74,13 +68,10 @@
   let isClickedSubmit = false
 
   //   handle upload room image
-  const maxCapacity = {
-    {
-      \
-      Config::get('constants.max_capacity_image_upload')
-    }
-  }
+  const maxCapacity = {{ \Config::get('constants.max_capacity_image_upload') }}
   const course = @json($course);
+  console.log(course)
+  
 
   if (course) {
     const initialPreview = [course.thumbnail]
@@ -115,7 +106,24 @@
       initialPreviewFileType: 'image', // image is the default and can be overridden in config below
     }).on('fileuploaded', function(e, params) {
       console.log('File uploaded params', params);
-    })
+    }).on('filebeforedelete', function(event, key, jqXHR, data) {
+      const token = $('input[name="_token"]').val();
+      $.ajax({
+          url: "/courses/delete-img/" + key,
+          type: 'POST',
+          data: {
+              _token: token
+          },
+          success: function(response) {
+              console.log('Image deleted successfully:', response);
+          },
+          error: function(xhr, status, error) {
+              console.error('Error deleting image:', error);
+          }
+      });
+
+      return false;
+  });
 
     const initialPreviewBanner = [course.banner]
     const initialPreviewConfigBanner = [{

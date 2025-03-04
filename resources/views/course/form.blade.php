@@ -41,7 +41,8 @@
           </div>
         </div>
         @endif
-        <form id="form-course" method="POST" action="{{ $course ? route('courses.update', ['id' => $course->id]) : route('courses.createCourse') }}"
+        <form id="form-post" method="POST" action="{{ $course ? route('courses.update', ['id' => $course->id])
+         : route('courses.createCourse') }}"
           enctype="multipart/form-data">
           {{ csrf_field() }}
           <div class="card-body">
@@ -59,6 +60,7 @@
             <div class="form-group">
               <label for="room-description">{{ __('course.description') }}</label>
               <textarea name="description" cols="20" rows="5" class="form-control" placeholder="{{ __('course.form_placeholder.description_placeholder') }}">{{old('description', $course ? $course->description : '')}}</textarea>
+
             </div>
 
             <div class="col-6 form-group">
@@ -79,17 +81,20 @@
 
             <div class="form-group">
               <label for="room-name">{{ __('course.original_price') }}</label>
-              <input value="{{old('originalPrice', $course ? Helper::convertMoney($course->original_price) : '')}}" id="originalPrice" name="originalPrice" type="text" class="form-control" onkeyup="onlyNumberAmount(event)">
+              <input value="{{old('originalPrice', $course ? \App\Helpers\Helper::convertMoney($course->original_price) : '')}}" id="originalPrice" name="originalPrice" type="text" class="form-control" onkeyup="onlyNumberAmount(event)">
+     
             </div>
 
             <div class="form-group">
               <label for="room-name">{{ __('course.sale_off_price') }}</label>
-              <input value="{{old('saleOffPrice', $course ? Helper::convertMoney($course->sale_off_price) : '')}}" id="saleOffPrice" name="saleOffPrice" type="text" class="form-control" onkeyup="onlyNumberAmount(event)">
+              <input value="{{old('saleOffPrice', $course ? \App\Helpers\Helper::convertMoney($course->sale_off_price) : '')}}" id="saleOffPrice" name="saleOffPrice" type="text" class="form-control" onkeyup="onlyNumberAmount(event)">
+        
             </div>
 
             <div class="form-group">
               <label for="room-name">{{ __('course.course_duration') }}</label>
               <input id="courseDuration" value="{{old('courseDuration', $course ? $course->course_duration : '')}}" name="courseDuration" type="text" class="form-control">
+      
             </div>
 
             <input type="hidden" name="video-list[]" class="input-video-list" />
@@ -106,7 +111,7 @@
                   </div>
                 </div>
               </div>
-              <!-- <div class="table table-wrapper">
+              <div class="table table-wrapper">
                 <table class="table table-bordered w-full table-result">
                   <thead>
                     <tr>
@@ -120,7 +125,7 @@
                   <tbody id="video-body-list">
                   </tbody>
                 </table>
-              </div> -->
+              </div>
               <div id="modal-select-video" class="modal fade" role="dialog">
                 <div class="modal-dialog modal-xl">
                   <div class="modal-content">
@@ -141,6 +146,7 @@
                                 <th>{{__('video.title')}}</th>
                                 <th>{{__('video.videoThumbnail')}}</th>
                                 <th>{{__('video.created_at')}}</th>
+                                <th>{{__('video.action')}}</th>
                               </tr>
                             </thead>
                           </table>
@@ -173,6 +179,8 @@
                   </div>
                 </div>
               </div>
+            </div>
+
               <div class="form-group">
                 <label for="room-name">{{ __('course.course_tag') }}</label>
                 <select id="tag-filter" name="courseTags[]" class="select2 form-control" multiple="multiple"
@@ -188,6 +196,7 @@
                   @endforeach
                 </select>
               </div>
+
               <div class="form-group">
                 <label for="room-name">{{ __('course.status') }}</label>
                 <select id="status-filter" name="status" class="select2 form-control"
@@ -237,6 +246,7 @@
               <div class="form-group">
                 <label for="post-name">Tên tác giả</label>
                 <input type="text" value="{{old('title', $course ? $course->author : '')}}" name="author" class="form-control" id="author" placeholder="Nhập tên tác giả">
+       
               </div>
 
               <div class="form-group">
@@ -258,11 +268,10 @@
                   <!-- /.col-->
                 </div>
               </div>
-            </div>
-            <!-- /.card-body -->
-            <div class="card-footer">
-              <button class="btn btn-primary btn-submit-course" type="submit">{{ $course ? __('course.update_course') : __('course.create_course') }}</button>
-            </div>
+              <!-- /.card-body -->
+              <div class="card-footer">
+                <button class="btn btn-primary btn-submit-course" type="submit">{{ $course ? __('course.update_course') : __('course.create_course') }}</button>
+              </div>
         </form>
       </div>
     </div>
@@ -273,25 +282,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>
   $(document).ready(function() {
+    var thumbnailUrl = "{{ $course && $course->thumbnail ? $course->thumbnail : null }}";
+    var bannerUrl = "{{ $course && $course->banner ? $course->banner : null }}";
+
+    if (thumbnailUrl) {
+      $("#input-pd").fileinput({
+        initialPreview: [
+          thumbnailUrl
+        ],
+        initialPreviewAsData: true, // Hiển thị ảnh từ URL
+        showUpload: false, // Ẩn nút upload
+        previewFileType: 'any' // Loại file để xem trước
+      });
+    } else {
+      $("#input-pd").fileinput({
+        showUpload: false,
+        previewFileType: 'any'
+      });
+    }
+    if (bannerUrl) {
+      $("#input-banner-pd").fileinput({
+        initialPreview: [
+          bannerUrl
+        ],
+        initialPreviewAsData: true, // Hiển thị ảnh từ URL
+        showUpload: false, // Ẩn nút upload
+        previewFileType: 'any' // Loại file để xem trước
+      });
+    } else {
+      $("#input-banner-pd").fileinput({
+        showUpload: false,
+        previewFileType: 'any'
+      });
+    }
     $('.select2').select2()
-    $.fn.fileinputBsVersion = "3.3.7";
-    // input-file thumbnail
-    $("#input-pd").fileinput();
+    // $.fn.fileinputBsVersion = "3.3.7";
+    // // input-file thumbnail
+    // $("#input-pd").fileinput();
 
-    // with plugin options
-    $("#input-pd").fileinput({
-      'showUpload': false,
-      'previewFileType': 'any'
-    });
+    // // with plugin options
+    // $("#input-pd").fileinput({
+    //   'showUpload': false,
+    //   'previewFileType': 'any'
+    // });
 
-    // input-file banner
-    $("#input-banner-pd").fileinput();
+    // // input-file banner
+    // $("#input-banner-pd").fileinput();
 
-    // with plugin options
-    $("#input-banner-pd").fileinput({
-      'showUpload': false,
-      'previewFileType': 'any'
-    });
+    // // with plugin options
+    // $("#input-banner-pd").fileinput({
+    //   'showUpload': false,
+    //   'previewFileType': 'any'
+    // });
   });
 </script>
 <style lang="css">
