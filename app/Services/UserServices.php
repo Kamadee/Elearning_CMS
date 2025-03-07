@@ -336,4 +336,107 @@ class UserServices
       ];
     }
   }
+
+  public function getPermissionList()
+  {
+    $queries = Permission::select('*');
+    return $queries->get();
+  }
+
+  public function formatPermissionDatatables($data)
+  {
+    return Datatables::of($data)
+      ->addIndexColumn()
+      ->addColumn('action', function ($row) {
+        $action = '';
+        if (Helper::checkPermission('permission.edit')) {
+          $action .= '<a href="/permission/detail/' . $row->id . '" class="edit btn btn-primary btn-sm mr-1">' . __('permission.detail_permission') . '</a>';
+        }
+        if (Helper::checkPermission('permission.delete')) {
+          $action .= '<button data-id="' . $row->id . '" data-name="' . $row->permission_name . '" class="btn-delete-permission btn btn-danger btn-sm">' . __('permission.delete_permission') . '</button>';
+        }
+        return $action;
+      })
+      ->rawColumns(['action'])
+      ->make(true);
+  }
+
+  public function processCreatePermission($formData)
+  {
+    try {
+      $permissionData = [
+        'permission_name' => strtoupper($formData['permissionName']),
+        'guard_name' => strtolower($formData['permissionName']),
+        'description' => $formData['permissionDescription'],
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ];
+
+      DB::beginTransaction();
+      $id = Permission::insertGetId($permissionData);
+
+      DB::commit();
+      return [
+        'status' => true,
+        'id' => $id,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function processUpdatePermission($id, $formData)
+  {
+    try {
+      $permissionData = [
+        'permission_name' => strtoupper($formData['permissionName']),
+        'guard_name' => strtolower($formData['permissionName']),
+        'description' => $formData['permissionDescription'],
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ];
+
+      DB::beginTransaction();
+      Permission::where('id', $id)->update($permissionData);
+
+      DB::commit();
+      return [
+        'status' => true,
+        'id' => $id,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function processDeletePermission($id)
+  {
+    try {
+      DB::beginTransaction();
+      $permission = Permission::find($id);
+      $permission->roles()->detach();
+      $permission->delete();
+      DB::commit();
+      return [
+        'status' => true,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
 }

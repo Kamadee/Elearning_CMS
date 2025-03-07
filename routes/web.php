@@ -52,13 +52,13 @@ Route::group(['prefix' => 'role', 'as' => 'role', 'middleware' => 'auth'], funct
   Route::delete('/delete/{id}', [AdminController::class, 'deleteRole'])->name('.delete');
 });
 
-// Quản lý permisson 
+// Quản lý permisson (ok hết)
 Route::group(['prefix' => 'permission', 'as' => 'permission', 'middleware' => ['auth']], function () {
-  Route::get('/list', [AdminController::class, 'getPermissionList'])->middleware('permission-check:permission.list')->name('.list');
+  Route::get('/list', [AdminController::class, 'getPermissionList'])->middleware(PermissionMiddleware::class . ':permission.list')->name('.list');
   Route::get('/anyData', [AdminController::class, 'permissionAnyData'])->name('.anyData');
-  Route::get('/create', [AdminController::class, 'createPermission'])->middleware('permission-check:permission.create')->name('.create');
+  Route::get('/create', [AdminController::class, 'createPermission'])->middleware(PermissionMiddleware::class . ':permission.create')->name('.create');
   Route::post('/createPermission', [AdminController::class, 'storePermission'])->name('.createPermission');
-  Route::get('/detail/{id}', [AdminController::class, 'permissionDetail'])->middleware('permission-check:permission.edit')->name('.detail');
+  Route::get('/detail/{id}', [AdminController::class, 'permissionDetail'])->middleware(PermissionMiddleware::class . ':permission.edit')->name('.detail');
   Route::post('/update/{id}', [AdminController::class, 'updatePermission'])->name('.updatePermission');
   Route::delete('/delete/{id}', [AdminController::class, 'deletePermission'])->name('.delete');
 });

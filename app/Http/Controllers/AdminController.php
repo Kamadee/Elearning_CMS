@@ -205,4 +205,97 @@ class AdminController extends Controller
     $roleId = $request->id;
     return $this->userServices->processDeleteRole($roleId);
   }
+
+  public function getPermissionList(Request $request)
+  {
+    return view('permission.index');
+  }
+
+  public function permissionAnyData(Request $request)
+  {
+    $data = $this->userServices->getPermissionList();
+    $datatableFormat = $this->userServices->formatPermissionDatatables($data);
+    return $datatableFormat;
+  }
+
+  public function createPermission(Request $request)
+  {
+    return view('permission.create');
+  }
+
+  public function storePermission(Request $request)
+  {
+    $data = $request->all();
+    $data['permission_name'] = $data['permissionName'];
+    $validator = Validator::make($data, [
+      'permission_name' => [
+        'required',
+        'max:255',
+        Rule::unique('permissions'),
+      ],
+      'permissionDescription' => 'required|max:255'
+    ]);
+
+    if ($validator->fails()) {
+      return redirect()->route('permission.create')
+        ->withErrors($validator)
+        ->withInput();
+    }
+    $result = $this->userServices->processCreatePermission($data);
+    if ($result['status']) {
+      return redirect()->route('permission.detail', ['id' => $result['id']])->withSuccess(__('permission.message.create_permission_success'));
+    }
+    return redirect()->route('permission.create')
+      ->withErrors($result['message'])
+      ->withInput();
+  }
+
+  public function permissionDetail(Request $request)
+  {
+    $permission = Permission::find($request->id);
+    return view('permission.detail', ['permission' => $permission]);
+  }
+
+  public function updatePermission(Request $request)
+  {
+    $data = $request->all();
+    $data['permission_name'] = $data['permissionName'];
+    $validator = Validator::make($data, [
+      'id' => 'exists:permissions,id',
+      'permission_name' => [
+        'required',
+        'max:255',
+        Rule::unique('permissions')->ignore($request->id),
+      ],
+      'permissionDescription' => 'required|max:255'
+    ]);
+
+    if ($validator->fails()) {
+      return redirect()->route('permission.detail', ['id' => $request->id])
+        ->withErrors($validator)
+        ->withInput();
+    }
+
+    $result = $this->userServices->processUpdatePermission($request->id, $data);
+    if ($result['status']) {
+      return redirect()->route('permission.detail', ['id' => $request->id])->withSuccess(__('permission.message.update_permission_success', ['permissionName' => $request->permissionName]));
+    }
+    return redirect()->route('permission.detail', ['id' => $request->id])
+      ->withErrors($result['message'])
+      ->withInput();
+  }
+
+  public function deletePermission(Request $request)
+  {
+    $validator = Validator::make($request->all(), [
+      'id' => 'exists:permissions,id',
+    ]);
+
+    if ($validator->fails()) {
+      return ['status' => false, 'message' => __('permission.message.permission_not_found')];
+    }
+    $permissionId = $request->id;
+    $result = $this->userServices->processDeletePermission($permissionId);
+    return $result;
+  }
 }
