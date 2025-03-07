@@ -25,6 +25,7 @@ class VideoController extends Controller
   {
     return view('video.index');
   }
+
   public function anyData()
   {
     $filterData = [];
@@ -32,6 +33,16 @@ class VideoController extends Controller
     $dataVideoTables = $this->videoServices->formatVideoDatatables($data);
     return $dataVideoTables;
   }
+
+  public function anyDataForCreate()
+  {
+    $filterData = [];
+    $data = $this->videoServices->getVideos($filterData);
+    $dataVideoTables = $this->videoServices->formatVideoListDataTableForCreateCource($data);
+    // dd($dataVideoTables);
+    return $dataVideoTables;
+  }
+
   public function create()
   {
     $currentTime = Carbon::now();

@@ -30,8 +30,8 @@ Route::group(['prefix' => 'customer', 'as' => 'customer', 'middleware' => 'auth'
   Route::get('/detail/{id}', [CustomerController::class, 'detail'])->middleware(PermissionMiddleware::class . ':customer.edit')->name('.detail'); //ok
 });
 
-// Quản lý admin
-Route::group(['prefix' => 'admin', 'as' => 'admin', 'middleware' => 'auth'], function () { // chưa làm
+// Quản lý admin (ok hết rồi)
+Route::group(['prefix' => 'admin', 'as' => 'admin', 'middleware' => 'auth'], function () {
   Route::get('/list', [AdminController::class, 'list'])->middleware(PermissionMiddleware::class . ':admin.list')->name('.list');
   Route::get('/anyData', [AdminController::class, 'anyData'])->name('.anyData');
   Route::get('/create', [AdminController::class, 'createAccount'])->middleware(PermissionMiddleware::class . ':admin.create')->name('.createAccount');
@@ -39,6 +39,28 @@ Route::group(['prefix' => 'admin', 'as' => 'admin', 'middleware' => 'auth'], fun
   Route::post('/update/{id}', [AdminController::class, 'updateAccount'])->name('.updateAccount');
   Route::get('/detail/{id}', [AdminController::class, 'adminDetail'])->middleware(PermissionMiddleware::class . ':admin.edit')->name('.detail');
   Route::delete('/delete/{id}', [AdminController::class, 'deleteUser'])->name('.delete');
+});
+
+// Quản lý role (ok hết)
+Route::group(['prefix' => 'role', 'as' => 'role', 'middleware' => 'auth'], function () {
+  Route::get('/list', [AdminController::class, 'getRoleList'])->middleware(PermissionMiddleware::class . ':role.list')->name('.list');
+  Route::get('/anyData', [AdminController::class, 'roleAnyData'])->name('.anyData');
+  Route::get('/create', [AdminController::class, 'create'])->middleware(PermissionMiddleware::class . ':role.create')->name('.create');
+  Route::post('/createRole', [AdminController::class, 'createRole'])->name('.createRole');
+  Route::get('/detail/{id}', [AdminController::class, 'roleDetail'])->middleware(PermissionMiddleware::class . ':role.edit')->name('.detail');
+  Route::post('/update/{id}', [AdminController::class, 'updateRole'])->name('.updateRole');
+  Route::delete('/delete/{id}', [AdminController::class, 'deleteRole'])->name('.delete');
+});
+
+// Quản lý permisson 
+Route::group(['prefix' => 'permission', 'as' => 'permission', 'middleware' => ['auth']], function () {
+  Route::get('/list', [AdminController::class, 'getPermissionList'])->middleware('permission-check:permission.list')->name('.list');
+  Route::get('/anyData', [AdminController::class, 'permissionAnyData'])->name('.anyData');
+  Route::get('/create', [AdminController::class, 'createPermission'])->middleware('permission-check:permission.create')->name('.create');
+  Route::post('/createPermission', [AdminController::class, 'storePermission'])->name('.createPermission');
+  Route::get('/detail/{id}', [AdminController::class, 'permissionDetail'])->middleware('permission-check:permission.edit')->name('.detail');
+  Route::post('/update/{id}', [AdminController::class, 'updatePermission'])->name('.updatePermission');
+  Route::delete('/delete/{id}', [AdminController::class, 'deletePermission'])->name('.delete');
 });
 
 // Quản lý bài viết (còn xóa post và xóa ảnh thumbnail)
@@ -89,13 +111,12 @@ Route::get('/home', [HomeController::class, 'index'])->middleware('auth')->name(
 //   Route::delete('/delete/{id}', 'BannerController@deleteBanner')->name('.delete');
 // });
 
-// Quản lý video (đang k chạy dc php artisan queue:work, nhưng đã xong cái này, còn cái render thumnail đang dở)
+// Quản lý video (ok hết, về sau bổ sung thêm xóa video là dc)
 Route::group(['prefix' => 'video', 'as' => 'video', 'middleware' => 'auth'], function () {
   Route::get('/list', [VideoController::class, 'list'])->middleware(PermissionMiddleware::class . ':video.list')->name('.list');
   Route::get('/create', [VideoController::class, 'create'])->middleware(PermissionMiddleware::class . ':video.upload')->name('.create');
   Route::post('/uploadVideo', [VideoController::class, 'uploadVideo'])->name('.uploadVideo');
   Route::post('/saveVideoId', [VideoController::class, 'saveVideoId'])->name('.saveVideoId');
-  Route::post('/checkUploadVimeoStatus', [VideoController::class, 'checkUploadVimeoStatus'])->name('.checkUploadVimeoStatus');
   Route::get('/anyData', [VideoController::class, 'anyData'])->name('.anyData');
   Route::get('/anyDataForCreate', [VideoController::class, 'anyDataForCreate'])->name('.anyDataForCreate');
   Route::delete('/delete/{id}', [VideoController::class, 'deleteVideo'])->middleware(PermissionMiddleware::class . ':video.delete')->name('.delete');
@@ -105,19 +126,20 @@ Route::group(['prefix' => 'video', 'as' => 'video', 'middleware' => 'auth'], fun
   Route::get('/vimeo/thumbnail', [VideoController::class, 'fetchVimeoThumbnail'])->name('.vimeoDetail');
 });
 
-// Quản lý khóa học
+// Quản lý khóa học (còn thêm video vào khóa học + xóa banner, thumbnail )
 Route::group(['prefix' => 'courses', 'as' => 'courses', 'middleware' => 'auth'], function () {
   Route::get('/hot', [CourseController::class, 'hotCourse'])->middleware(PermissionMiddleware::class . ':course.list')->name('.hot');
-  Route::post('/hot', [CourseController::class, 'postHotCourse'])->name('.hostCreate');
+  Route::post('/postHotCourse', [CourseController::class, 'postHotCourse'])->name('.postHotCourse');
   Route::get('/anyDataForHot', [CourseController::class, 'anyDataForHot'])->name('.anyDataForHot');
+  Route::delete('/delete-hot/{id}', [CourseController::class, 'deleteHot'])->name('.delete-hot');
   Route::get('/list', [CourseController::class, 'list'])->middleware(PermissionMiddleware::class . ':course.list')->name('.list');
   Route::get('/create', [CourseController::class, 'create'])->middleware(PermissionMiddleware::class . ':course.create')->name('.create');
   Route::post('/createCourse', [CourseController::class, 'createCourse'])->name('.createCourse');
   Route::get('/anyData', [CourseController::class, 'anyData'])->name('.anyData');
   Route::post('/update/{id}', [CourseController::class, 'updateCourse'])->name('.update');
   Route::get('/detail/{id}', [CourseController::class, 'detail'])->middleware(PermissionMiddleware::class . ':course.edit')->name('.detail');
-  Route::post('/delete-img/{id}', [CourseController::class, 'deleteThumbnai'])->name('.thumnail.delete');
-  Route::post('/delete-img-banner/{id}', [CourseController::class, 'deleteBanner'])->name('.banner.delete');
+  Route::post('/delete-img/{id}', [CourseController::class, 'deleteThumbnai'])->name('.delete-thumnail');
+  Route::post('/delete-img-banner/{id}', [CourseController::class, 'deleteBanner'])->name('.delete-banner');
   Route::post('/upload-img', [CourseController::class, 'uploadImage'])->name('.uploadImage');
   Route::delete('/delete/{id}', [CourseController::class, 'deleteCourse'])->name('.delete');
 });

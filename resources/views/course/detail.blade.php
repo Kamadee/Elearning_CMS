@@ -68,10 +68,15 @@
   let isClickedSubmit = false
 
   //   handle upload room image
-  const maxCapacity = {{ \Config::get('constants.max_capacity_image_upload') }}
+  const maxCapacity = {
+    {
+      \
+      Config::get('constants.max_capacity_image_upload')
+    }
+  }
   const course = @json($course);
   console.log(course)
-  
+
 
   if (course) {
     const initialPreview = [course.thumbnail]
@@ -90,7 +95,7 @@
       allowedFileExtensions: ['jpg', 'jpeg', 'png', 'gif'],
       uploadAsync: true,
       showUpload: false,
-      showRemove: false,
+      showRemove: true,
       minFileCount: 0,
       maxFileCount: 1,
       overwriteInitial: false,
@@ -109,21 +114,21 @@
     }).on('filebeforedelete', function(event, key, jqXHR, data) {
       const token = $('input[name="_token"]').val();
       $.ajax({
-          url: "/courses/delete-img/" + key,
-          type: 'POST',
-          data: {
-              _token: token
-          },
-          success: function(response) {
-              console.log('Image deleted successfully:', response);
-          },
-          error: function(xhr, status, error) {
-              console.error('Error deleting image:', error);
-          }
+        url: "/courses/delete-img/" + key,
+        type: 'POST',
+        data: {
+          _token: token
+        },
+        success: function(response) {
+          console.log('Image deleted successfully:', response);
+        },
+        error: function(xhr, status, error) {
+          console.error('Error deleting image:', error);
+        }
       });
 
       return false;
-  });
+    });
 
     const initialPreviewBanner = [course.banner]
     const initialPreviewConfigBanner = [{

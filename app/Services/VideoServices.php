@@ -249,4 +249,30 @@ class VideoServices
       }
     }
   }
+
+  public function formatVideoListDataTableForCreateCource($data)
+  {
+    return Datatables::of($data)
+      ->addColumn('check', function ($row) {
+        return '<input type="checkbox" class="form-checkbox-input">';
+      })
+      ->addIndexColumn()
+      ->addColumn('title', function ($row) {
+        return $row->video_id;
+      })
+      ->addColumn('videoThumbnail', function ($row) {
+        if (!empty($row->thumbnail_id)) {
+          return '<img style="width: 120px;height: 120px;" src="' . $row->thumbnail_id . '" />';
+        }
+        return '<img style="width: 120px;height: 120px;" src="' . url('/images/default_image.png') . '" />';
+      })
+      ->addColumn('created_at', function ($row) {
+        return $row->created_at;
+      })
+      ->addColumn('action', function ($row) {
+        return '<button type="button" class="btn btn-block btn-info btn-info-video" style=" width: 130px; " video-id="' . $row->vimeo_id . '">Xem video</button>';
+      })
+      ->rawColumns(['videoThumbnail', 'check', 'action'])
+      ->make(true);
+  }
 }

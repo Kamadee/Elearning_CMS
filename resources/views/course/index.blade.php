@@ -27,7 +27,7 @@
         <div class="row">
           <div class="col-6 form-group">
             <label>{{ __('course.filter_category') }}</label>
-            <select id="course-category-filter" class="select2 form-control" multiple="multiple"
+            <select id="course-category-filter" name="" class="select2 form-control" multiple="multiple"
               data-placeholder="{{ __('course.filter_category_placeholder') }}" style="width: 100%;">
               @foreach($categoryList as $category)
               <option value="{{ $category->id }}">{{ $category->category_name }}</option>
@@ -52,17 +52,17 @@
         <table class="table table-bordered" id="course-table">
           <thead>
             <tr>
-                <th>{{__('course.id')}}</th>
-                <th>{{__('course.title')}}</th>
-                <th>{{__('course.banner')}}</th>
-                <th>{{__('course.author')}}</th>
-                <th>{{__('course.course_category')}}</th>
-                <th>{{__('course.course_duration')}}</th>
-                <th>{{__('course.original_price')}}</th>
-                <th>{{__('course.sale_off_price')}}</th>
-                <th class="status">{{__('course.status')}}</th>
-                <th>{{__('course.created_at')}}</th>
-                <th>{{__('course.action')}}</th>
+              <th>{{__('course.id')}}</th>
+              <th>{{__('course.title')}}</th>
+              <th>{{__('course.banner')}}</th>
+              <th>{{__('course.author')}}</th>
+              <th>{{__('course.course_category')}}</th>
+              <th>{{__('course.course_duration')}}</th>
+              <th>{{__('course.original_price')}}</th>
+              <th>{{__('course.sale_off_price')}}</th>
+              <th class="status">{{__('course.status')}}</th>
+              <th>{{__('course.created_at')}}</th>
+              <th>{{__('course.action')}}</th>
             </tr>
           </thead>
         </table>
@@ -151,6 +151,8 @@
     });
 
     $('#course-category-filter').on('change', function(e) {
+      console.log(1111);
+
       handlerFilter();
     });
     $('#course-status-filter').on('change', function(e) {

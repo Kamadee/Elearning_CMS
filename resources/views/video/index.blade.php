@@ -145,8 +145,6 @@
 
     $(".fetch_thumbnail_btn").on("click", function(e) {
       e.preventDefault();
-      console.log(1111);
-
       uploadVimeoThumbnail();
     });
 

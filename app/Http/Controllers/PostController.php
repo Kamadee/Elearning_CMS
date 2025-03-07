@@ -150,7 +150,6 @@ class PostController extends Controller
   public function deleteThumbnai(Request $request)
   {
     $result = $this->postServices->processDeleteThumbnailImage($request->id);
-    dd($result);
     return $result;
   }
 }

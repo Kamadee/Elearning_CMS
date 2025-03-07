@@ -24,9 +24,14 @@ return [
     'completed' => 3,
     'cancelled' => 4,
   ],
+  'content_type' => 'course',
   'course_status_by_text' => [
     'active' => 1,
     'private' => 2
+  ],
+  'course_status' => [
+    1 => 'active',
+    2 => 'private'
   ],
   'order_status' => [
     'placed' => 1,

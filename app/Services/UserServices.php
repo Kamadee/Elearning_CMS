@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
 use App\Models\User;
-use App\Models\Tag;
-use App\Models\Post;
+use App\Models\RolePermission;
+use App\Models\Permission;
 use App\Helpers\Helper;
 use App\Models\Role;
 use Carbon\Carbon;
@@ -74,12 +73,97 @@ class UserServices
           $action .= '<a href="/admin/detail/' . $row->id . '" class="edit btn btn-primary btn-sm">' . __('admin.detail_admin') . '</a>';
         }
         if (Helper::checkPermission('admin.delete')) {
-          $action .= '<button data-id="' . $row->id . '" data-name="' . $row->username . '" class="btn-delete-admin btn btn-danger btn-sm">' . __('admin.delete_admin') . '</button>';
+          $action .= '<button data-id="' . $row->id . '" data-name="' . $row->username . '" class="btn-delete-user btn btn-danger btn-sm">' . __('admin.delete_admin') . '</button>';
         }
         return $action;
       })
       ->rawColumns(['role_name', 'role_description', 'action'])
       ->make(true);
+  }
+
+  public function processUpdateAccount($id, $formData)
+  {
+    try {
+      $accountData = [
+        'username' => $formData['username'],
+        'updated_at' => Carbon::now()
+      ];
+      if (isset($formData['password'])) {
+        $accountData['password'] = Hash::make($formData['password']);
+      }
+
+      DB::beginTransaction();
+      User::where('id', $id)->update($accountData);
+
+      $roleSelected = isset($formData['roleSelected']) ? $formData['roleSelected'] : [];
+      $dataUserRoles = [];
+      foreach ($roleSelected as $role) {
+        $dataUserRoles[] = [
+          'user_id' => (int)$id,
+          'role_id' => (int)$role,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ];
+      }
+      $currentUser = User::find($id);
+      $currentUser->roles()->detach();
+      $currentUser->roles()->attach($dataUserRoles);
+
+      DB::commit();
+      return [
+        'status' => true,
+        'id' => $id,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function processCreateAccount($formData)
+  {
+    try {
+      $accountData = [
+        'username' => $formData['username'],
+        'password' => Hash::make($formData['password']),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ];
+
+      DB::beginTransaction();
+      $id = User::insertGetId($accountData);
+
+      $roleSelected = isset($formData['roleSelected']) ? $formData['roleSelected'] : [];
+      $dataUserRoles = [];
+      foreach ($roleSelected as $role) {
+        $dataUserRoles[] = [
+          'user_id' => (int)$id,
+          'role_id' => (int)$role,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ];
+      }
+      $currentUser = User::find($id);
+      $currentUser->roles()->detach();
+      $currentUser->roles()->attach($dataUserRoles);
+
+      DB::commit();
+      return [
+        'status' => true,
+        'id' => $id,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
   }
 
   public function processDeleteUser($id)
@@ -88,6 +172,7 @@ class UserServices
       DB::beginTransaction();
       $user = User::find($id);
       $user->roles()->detach();
+      $user->status = array_keys(Config::get('constants.user_status'))[0];
       $user->delete();
       DB::commit();
       return [
@@ -96,6 +181,155 @@ class UserServices
       ];
     } catch (\Exception $e) {
       DB::rollback();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function formatRoleDatatables($data)
+  {
+    return Datatables::of($data)
+      ->addIndexColumn()
+      ->addColumn('action', function ($row) {
+        $action = '';
+        if (Helper::checkPermission('role.edit')) {
+          $action .= '<a href="/role/detail/' . $row->id . '" class="edit btn btn-primary btn-sm mr-1">' . __('role.detail_role') . '</a>';
+        }
+        $action .= '<button data-id="' . $row->id . '" data-name="' . $row->role_name . '" class="btn-delete-role btn btn-danger btn-sm">' . __('role.delete_role') . '</button>';
+
+        return $action;
+      })
+      ->rawColumns(['action'])
+      ->make(true);
+  }
+
+  public function getGroupByPermission()
+  {
+    $permissionAll = Permission::all();
+    $data = [];
+    foreach ($permissionAll as $permission) {
+      $guardName = $permission->guard_name;
+      $key = explode(".", $guardName)[0];
+      if (isset($data[$key])) {
+        $data[$key][] = $permission;
+      } else {
+        $data[$key] = [$permission];
+      }
+    }
+
+    return $data;
+  }
+
+  public function processCreateRole($formData)
+  {
+    try {
+      $roleData = [
+        'role_name' => $formData['roleName'],
+        'description' => $formData['roleDescription'],
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ];
+
+      DB::beginTransaction();
+      $id = Role::insertGetId($roleData);
+
+      if (isset($formData['permissionSelected'])) {
+        $permissionSelected = json_decode($formData['permissionSelected'], true);
+        $dataRolePermission = [];
+        foreach ($permissionSelected as $permission) {
+          $dataRolePermission[] = [
+            'role_id' => $id,
+            'permission_id' => (int)$permission['permission'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ];
+        }
+        if (count($dataRolePermission) > 0) {
+          RolePermission::insert($dataRolePermission);
+        }
+      }
+
+      DB::commit();
+      return [
+        'status' => true,
+        'id' => $id,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function getRoleDetail($id)
+  {
+    $role = Role::with(['permissions'])->find($id);
+    return $role;
+  }
+
+  public function processUpdateRole($id, $formData)
+  {
+    try {
+      $roleData = [
+        'role_name' => $formData['roleName'],
+        'description' => $formData['roleDescription'],
+        'updated_at' => Carbon::now()
+      ];
+
+      DB::beginTransaction();
+      Role::where('id', $id)->update($roleData);
+
+      if (isset($formData['permissionSelected'])) {
+        $permissionSelected = json_decode($formData['permissionSelected'], true);
+        $dataRolePermission = [];
+        foreach ($permissionSelected as $permission) {
+          $dataRolePermission[] = [
+            'role_id' => (int)$id,
+            'permission_id' => (int)$permission['permission'],
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ];
+        }
+        $currentRole = Role::find($id);
+        $currentRole->permissions()->detach();
+        RolePermission::insert($dataRolePermission);
+      }
+
+      DB::commit();
+      return [
+        'status' => true,
+        'id' => $id,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      return [
+        'status' => false,
+        'message' => $e->getMessage()
+      ];
+    }
+  }
+
+  public function processDeleteRole($id)
+  {
+    try {
+      DB::beginTransaction();
+      $role = Role::find($id);
+      $role->permissions()->detach();
+      $role->users()->detach();
+      $role->delete();
+      DB::commit();
+      return [
+        'status' => true,
+        'message' => 'success'
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
       return [
         'status' => false,
         'message' => $e->getMessage()

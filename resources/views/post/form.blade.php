@@ -143,12 +143,12 @@
   </div>
 </div>
 
-<style>
-</style>
-
-
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
 <script>
-  $(function() {
+  $(document).ready(function() {
     $('.select2').select2()
 
     function handleDelThumbnail(postId) {

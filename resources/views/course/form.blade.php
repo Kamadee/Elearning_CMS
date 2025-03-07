@@ -82,19 +82,19 @@
             <div class="form-group">
               <label for="room-name">{{ __('course.original_price') }}</label>
               <input value="{{old('originalPrice', $course ? \App\Helpers\Helper::convertMoney($course->original_price) : '')}}" id="originalPrice" name="originalPrice" type="text" class="form-control" onkeyup="onlyNumberAmount(event)">
-     
+
             </div>
 
             <div class="form-group">
               <label for="room-name">{{ __('course.sale_off_price') }}</label>
               <input value="{{old('saleOffPrice', $course ? \App\Helpers\Helper::convertMoney($course->sale_off_price) : '')}}" id="saleOffPrice" name="saleOffPrice" type="text" class="form-control" onkeyup="onlyNumberAmount(event)">
-        
+
             </div>
 
             <div class="form-group">
               <label for="room-name">{{ __('course.course_duration') }}</label>
               <input id="courseDuration" value="{{old('courseDuration', $course ? $course->course_duration : '')}}" name="courseDuration" type="text" class="form-control">
-      
+
             </div>
 
             <input type="hidden" name="video-list[]" class="input-video-list" />
@@ -181,97 +181,97 @@
               </div>
             </div>
 
-              <div class="form-group">
-                <label for="room-name">{{ __('course.course_tag') }}</label>
-                <select id="tag-filter" name="courseTags[]" class="select2 form-control" multiple="multiple"
-                  data-placeholder="{{ __('course.form_placeholder.tag_placeholder') }}" style="width: 100%;">
-                  <?php $arrChecked = old('courseTags', $course ? $course->courseTags->pluck('id')->all() : []) ?>
-                  @foreach($tagList as $tag)
-                  <option
-                    <?php
-                    if (in_array($tag->id, $arrChecked)) {
-                      echo 'selected';
-                    } ?> value="{{ $tag->id }}">{{ $tag->tag_name }}
-                  </option>
-                  @endforeach
-                </select>
-              </div>
+            <div class="form-group">
+              <label for="room-name">{{ __('course.course_tag') }}</label>
+              <select id="tag-filter" name="courseTags[]" class="select2 form-control" multiple="multiple"
+                data-placeholder="{{ __('course.form_placeholder.tag_placeholder') }}" style="width: 100%;">
+                <?php $arrChecked = old('courseTags', $course ? $course->courseTags->pluck('id')->all() : []) ?>
+                @foreach($tagList as $tag)
+                <option
+                  <?php
+                  if (in_array($tag->id, $arrChecked)) {
+                    echo 'selected';
+                  } ?> value="{{ $tag->id }}">{{ $tag->tag_name }}
+                </option>
+                @endforeach
+              </select>
+            </div>
 
-              <div class="form-group">
-                <label for="room-name">{{ __('course.status') }}</label>
-                <select id="status-filter" name="status" class="select2 form-control"
-                  data-placeholder="{{ __('post.status_placeholder') }}" style="width: 100%;">
-                  @foreach($courseStatus as $id => $status)
-                  <option <?php if ($course && $course->status == $id) {
-                            echo 'selected';
-                          } ?> value="{{ $id }}">{{ __('course.status_list')[$id] }}</option>
-                  @endforeach
-                </select>
-              </div>
+            <div class="form-group">
+              <label for="room-name">{{ __('course.status') }}</label>
+              <select id="status-filter" name="status" class="select2 form-control"
+                data-placeholder="{{ __('post.status_placeholder') }}" style="width: 100%;">
+                @foreach($courseStatus as $id => $status)
+                <option <?php if ($course && $course->status == $id) {
+                          echo 'selected';
+                        } ?> value="{{ $id }}">{{ __('course.status_list')[$id] }}</option>
+                @endforeach
+              </select>
+            </div>
 
-              <div class="form-group">
-                <label for="room-name">{{ __('course.thumbnail') }}</label>
-                <div class="file-loading">
-                  <input id="input-pd" name="input-pd[]" type="file">
-                </div>
+            <div class="form-group">
+              <label for="room-name">{{ __('course.thumbnail') }}</label>
+              <div class="file-loading">
+                <input id="input-pd" name="input-pd[]" type="file">
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="room-name">{{ __('course.banner') }}</label>
-                <div class="file-loading">
-                  <input id="input-banner-pd" name="input-banner-pd[]" type="file">
-                </div>
+            <div class="form-group">
+              <label for="room-name">{{ __('course.banner') }}</label>
+              <div class="file-loading">
+                <input id="input-banner-pd" name="input-banner-pd[]" type="file">
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="post-content">{{ __('course.content') }}</label>
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="card card-outline card-info">
-                      <div class="card-header">
-                        <h3 class="card-title">
-                          {{ __('course.ck_editor_header') }}
-                        </h3>
-                      </div>
-                      <!-- /.card-header -->
-                      <div class="card-body">
-                        <textarea id="content" class="ckeditor" name="content">{{old('content', $course ? $course->content : '')}}</textarea>
-                      </div>
+            <div class="form-group">
+              <label for="post-content">{{ __('course.content') }}</label>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="card card-outline card-info">
+                    <div class="card-header">
+                      <h3 class="card-title">
+                        {{ __('course.ck_editor_header') }}
+                      </h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                      <textarea id="content" class="ckeditor" name="content">{{old('content', $course ? $course->content : '')}}</textarea>
                     </div>
                   </div>
-                  <!-- /.col-->
                 </div>
+                <!-- /.col-->
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="post-name">Tên tác giả</label>
-                <input type="text" value="{{old('title', $course ? $course->author : '')}}" name="author" class="form-control" id="author" placeholder="Nhập tên tác giả">
-       
-              </div>
+            <div class="form-group">
+              <label for="post-name">Tên tác giả</label>
+              <input type="text" value="{{old('title', $course ? $course->author : '')}}" name="author" class="form-control" id="author" placeholder="Nhập tên tác giả">
 
-              <div class="form-group">
-                <label for="post-content">Giới thiệu về tác giả</label>
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="card card-outline card-info">
-                      <div class="card-header">
-                        <h3 class="card-title">
-                          {{ __('course.ck_editor_header') }}
-                        </h3>
-                      </div>
-                      <!-- /.card-header -->
-                      <div class="card-body">
-                        <textarea id="authorDescription" class="ckeditor" name="authorDescription">{{old('authorDescription', $course ? $course->authorDescription : '')}}</textarea>
-                      </div>
+            </div>
+
+            <div class="form-group">
+              <label for="post-content">Giới thiệu về tác giả</label>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="card card-outline card-info">
+                    <div class="card-header">
+                      <h3 class="card-title">
+                        {{ __('course.ck_editor_header') }}
+                      </h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                      <textarea id="authorDescription" class="ckeditor" name="authorDescription">{{old('authorDescription', $course ? $course->authorDescription : '')}}</textarea>
                     </div>
                   </div>
-                  <!-- /.col-->
                 </div>
+                <!-- /.col-->
               </div>
-              <!-- /.card-body -->
-              <div class="card-footer">
-                <button class="btn btn-primary btn-submit-course" type="submit">{{ $course ? __('course.update_course') : __('course.create_course') }}</button>
-              </div>
+            </div>
+            <!-- /.card-body -->
+            <div class="card-footer">
+              <button class="btn btn-primary btn-submit-course" type="submit">{{ $course ? __('course.update_course') : __('course.create_course') }}</button>
+            </div>
         </form>
       </div>
     </div>
@@ -282,6 +282,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>
   $(document).ready(function() {
+    // function handleDelThumbnail(courseId) {
+    //   $.ajax({
+    //     url: '/courses/delete-thumnail/' + courseId,
+    //     type: 'post',
+    //     data: {
+    //       "_token": $('meta[name="csrf-token"]').attr('content'),
+    //       "id": courseIdss
+    //     },
+    //     success: function(response) {
+    //       if (response.status) {
+    //         console.log(response)
+    //         const msgDeleteSuccess = "<?php echo __('post.message.delete_post_success') ?>"
+    //         Swal.fire(msgDeleteSuccess, '', 'success')
+    //       } else {
+    //         Swal.fire('fail!', response.message, '')
+    //       }
+    //     }
+    //   });
+    // }
+
+    // $("#input-pd").on('click', '.fileinput-remove', function(event, key, jqXHR, data) {
+    //   console.log(11111);
+    //   var courseId = $('#id').val();
+    //   handleDelThumbnail(courseId)
+    // });
+
     var thumbnailUrl = "{{ $course && $course->thumbnail ? $course->thumbnail : null }}";
     var bannerUrl = "{{ $course && $course->banner ? $course->banner : null }}";
 

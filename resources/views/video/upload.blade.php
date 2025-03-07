@@ -25,7 +25,8 @@
 @section('js')
 <script>
   $(document).ready(() => {
-    const maxCapacity = {{ \Config::get('constants.max_capacity_video_upload') }}
+    const maxCapacity = {{ \Config::get('constants.max_capacity_video_upload') }};
+    
     $.fn.fileinputBsVersion = "3.3.7";
   
     // $("#input-pd").fileinput();

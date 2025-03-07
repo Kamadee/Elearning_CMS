@@ -111,10 +111,10 @@
     },
   });
 
-  $('.btn-submit-post').on('click', function() {
-    isClickedSubmit = true;
-    $("#input-pd").fileinput('upload');
-  })
+  // $('.btn-submit-post').on('click', function() {
+  //   isClickedSubmit = true;
+  //   $("#input-pd").fileinput('upload');
+  // })
 
   window.onbeforeunload = function() {
     if (form.serialize() != original && !isClickedSubmit)

@@ -90,6 +90,12 @@ class Helper
     {
         return number_format($number, 0, '', ',') . $ext;
     }
+
+    public static function convertMoneyToNumber($moneyStr)
+    {
+        $res = preg_replace('/[^0-9]/', '', $moneyStr);
+        return intval($res);
+    }
 }
 function getConstant($name, $default = null)
 {

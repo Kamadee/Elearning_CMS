@@ -134,3 +134,14 @@ body {
   display: flex;
   justify-content: space-between;
 }
+
+/* // Báo lỗi validate */
+.is-invalid {
+  border-color: red;
+}
+
+.invalid-feedback {
+  color: red;
+  font-size: 0.875em;
+  margin-top: 0.25rem;
+}

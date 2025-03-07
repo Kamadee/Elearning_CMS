@@ -35,7 +35,7 @@ class AdminController extends Controller
   public function adminDetail(Request $request)
   {
     $user = User::with(['roles'])->find($request->id);
-    $roleList = Role::all();
+    $roleList = Role::with(['permissions'])->get();
     return view('admin.detail', [
       'user' => $user,
       'roleList' => $roleList,
@@ -55,50 +55,54 @@ class AdminController extends Controller
 
   public function storeNewAccount(Request $request)
   {
-    $validator = Validator::make($request->all(), [
-      'title' => 'required|max:255',
-      'description' => 'max:1000',
-      'content' => 'required',
-      'input-pd' => 'required',
-      'status' => 'required'
+    $data = $request->all();
+    $validator = Validator::make($data, [
+      'username' => [
+        'required',
+        'max:255',
+        Rule::unique('users'),
+      ],
+      'password' => 'required|min:6|max:255'
     ]);
+
     if ($validator->fails()) {
-      return redirect()->route('posts.create')
+      return redirect()->route('admin.createAccount')
         ->withErrors($validator)
-        ->withInput();;
+        ->withInput();
     }
-    $result = $this->postServices->processCreatePost($request->all());
+
+    $result = $this->userServices->processCreateAccount($data);
     if ($result['status']) {
-      $postId = $result['id'];
-      return redirect()->route('posts.detail', ['id' => $postId])
-        ->withSuccess(__('post.message.create_post_success'));
+      return redirect()->route('admin.detail', ['id' => $result['id']])->withSuccess(__('admin.message.create_account_success', ['username' => $request->username]));
     }
-    return redirect()->route('posts.create')
+    return redirect()->route('admin.createAccount')
       ->withErrors($result['message'])
       ->withInput();
   }
 
   public function updateAccount(Request $request)
   {
-    $validator = Validator::make($request->all(), [
-      'id' => 'exists:posts,id',
-      'title' => 'required|max:255',
-      'description' => 'max:1000',
-      'content' => 'required',
-      'status' => 'required'
+    $data = $request->all();
+    $validator = Validator::make($data, [
+      'id' => 'exists:users,id',
+      'username' => [
+        'required',
+        'max:255',
+        Rule::unique('users')->ignore($request->id),
+      ],
+      'password' => 'nullable|min:6|max:255'
     ]);
+
     if ($validator->fails()) {
-      return redirect()->route('posts.detail', ['id' => $request->id])
+      return redirect()->route('admin.detail', ['id' => $request->id])
         ->withErrors($validator)
-        ->withInput();;
+        ->withInput();
     }
-    $result = $this->postServices->processUpdatePost($request->id, $request->all());
-    // dd($result);
+    $result = $this->userServices->processUpdateAccount($request->id, $data);
     if ($result['status']) {
-      return redirect()->route('posts.detail', ['id' => $request->id])
-        ->withSuccess(__('post.message.update_post_success', ['id' => $request->id]));
+      return redirect()->route('admin.detail', ['id' => $request->id])->withSuccess(__('admin.message.update_account_success', ['username' => $request->username]));
     }
-    return redirect()->route('posts.detail', ['id' => $request->id])
+    return redirect()->route('admin.detail', ['id' => $request->id])
       ->withErrors($result['message'])
       ->withInput();
   }
@@ -116,5 +120,89 @@ class AdminController extends Controller
     }
     $userId = $request->id;
     return $this->userServices->processDeleteUser($userId);
+  }
+
+  public function getRoleList(Request $request)
+  {
+    return view('role.index');
+  }
+
+  public function roleAnyData(Request $request)
+  {
+    $data = $this->userServices->getRoleList();
+    $datatableFormat = $this->userServices->formatRoleDatatables($data);
+    return $datatableFormat;
+  }
+
+  public function create(Request $request)
+  {
+    $permissionGroupBy = $this->userServices->getGroupByPermission();
+    return view('role.create', ['permissionList' => $permissionGroupBy]);
+  }
+
+  public function createRole(Request $request)
+  {
+    $data = $request->all();
+    $validator = Validator::make($data, [
+      'roleName' => 'required|max:255',
+      'roleDescription' => 'required|max:255'
+    ]);
+
+    if ($validator->fails()) {
+      return redirect()->route('role.create')
+        ->withErrors($validator)
+        ->withInput();
+    }
+    $result = $this->userServices->processCreateRole($data);
+    if ($result['status']) {
+      return redirect()->route('role.detail', ['id' => $result['id']])->withSuccess(__('role.message.create_role_success'));
+    }
+    return redirect()->route('role.create')
+      ->withErrors($result['message'])
+      ->withInput();
+  }
+
+  public function roleDetail(Request $request)
+  {
+    $role = $this->userServices->getRoleDetail($request->id);
+    $permissionGroupBy = $this->userServices->getGroupByPermission();
+    return view('role.detail', ['role' => $role, 'permissionList' => $permissionGroupBy]);
+  }
+
+  public function updateRole(Request $request)
+  {
+    $data = $request->all();
+    $validator = Validator::make($data, [
+      'id' => 'exists:roles,id',
+      'roleName' => 'required|max:255',
+      'roleDescription' => 'required|max:255'
+    ]);
+
+    if ($validator->fails()) {
+      return redirect()->route('role.detail', ['id' => $request->id])
+        ->withErrors($validator)
+        ->withInput();
+    }
+
+    $result = $this->userServices->processUpdateRole($request->id, $data);
+    if ($result['status']) {
+      return redirect()->route('role.detail', ['id' => $request->id])->withSuccess(__('role.message.update_role_success', ['roleName' => $request->roleName]));
+    }
+    return redirect()->route('role.detail', ['id' => $request->id])
+      ->withErrors($result['message'])
+      ->withInput();
+  }
+
+  public function deleteRole(Request $request)
+  {
+    $validator = Validator::make($request->all(), [
+      'id' => 'exists:roles,id',
+    ]);
+
+    if ($validator->fails()) {
+      return ['status' => false, 'message' => __('role.message.role_not_found')];
+    }
+    $roleId = $request->id;
+    return $this->userServices->processDeleteRole($roleId);
   }
 }

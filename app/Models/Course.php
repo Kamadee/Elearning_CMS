@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
+  use SoftDeletes;
+
+  protected $dates = ['deleted_at'];
   protected $table = 'courses';
 
   public $timestamps = true;
@@ -16,7 +20,7 @@ class Course extends Model
   }
   public function courseCategories()
   {
-    return $this->belongsToMany(CourseCategoryPivot::class, 'course_category_pivot');
+    return $this->belongsToMany(PostCategory::class, 'course_category_pivot');
   }
   public function videos()
   {
@@ -25,5 +29,10 @@ class Course extends Model
   public function orders()
   {
     return $this->belongsToMany(Order::class, 'order_items', 'course_id', 'order_id');
+  }
+  public static function getCourseRelationShipById($id)
+  {
+    $course = Course::with('courseCategories', 'courseTags', 'videos')->find($id);
+    return $course;
   }
 }

@@ -1,6 +1,7 @@
 <?php
 return [
   'course_management' => 'Quản lý khóa học',
+  'hot_course_management' => 'Quản lý top khóa học nổi bật',
   'id' => 'Mã khóa học',
   'name' => 'Tên khóa học',
   'title' => 'Tên khóa học',

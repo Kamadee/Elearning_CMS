@@ -107,7 +107,8 @@
         url: '/admin/delete/' + adminId,
         type: 'delete',
         data: {
-          "_token": $('meta[name="csrf-token"]').attr('content')
+          "_token": $('meta[name="csrf-token"]').attr('content'),
+          "id": adminId
         },
         success: function(response) {
           if (response.status) {

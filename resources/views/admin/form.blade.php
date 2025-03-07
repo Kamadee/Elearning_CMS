@@ -65,7 +65,7 @@
             <!-- ------------------------------ -->
             <div class="form-group">
               <label>{{ __('admin.role_name') }}</label>
-              <select id="admin-role-filter" name="roles[]" class="select2 form-control" multiple="multiple"
+              <select id="admin-role-filter" name="roleSelected[]" class="select2 form-control" multiple="multiple"
                 data-placeholder="{{ __('admin.role_selected') }}" style="width: 100%;">
                 <?php $arrChecked = old('roles', $user ? $user->roles->pluck('id')->all() : []) ?>
                 @foreach($roleList as $role)

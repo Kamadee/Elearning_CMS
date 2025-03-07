@@ -11,11 +11,8 @@
 @include('common.loadingSpinner')
 @stop
 
-@section('css')
-<link rel="stylesheet" href="{{ asset('css/receipt.add.css') }}">
-@stop
-
 @section('js')
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="{{ asset('/js/util.js') }}"></script>
 <script>
   const editor = CKEDITOR.replace('content', {
@@ -64,8 +61,16 @@
   const original = form.serialize()
   let isClickedSubmit = false
 
+  $('#saleOffPrice').on("change", function() {
+    $('#originalPrice').valid();
+  });
   //   handle upload room image
-  const maxCapacity = {{ \Config::get('constants.max_capacity_image_upload') }}
+  const maxCapacity = {
+    {
+      \
+      Config::get('constants.max_capacity_image_upload')
+    }
+  }
 
   var meta_token = $("meta[name=csrf-token]");
   $("#input-pd").fileinput({
@@ -106,10 +111,6 @@
     initialPreviewFileType: 'image', // image is the default and can be overridden in config below
   }).on('fileuploaded', function(e, params) {
     console.log('File uploaded params', params);
-  });
-
-  $('#saleOffPrice').on("change", function() {
-    $('#originalPrice').valid();
   });
 
   $('#video-body-list').sortable()
@@ -185,7 +186,9 @@
       }
     });
   }
-
+  const videoData = @json($videoData)
+  let checkedData = [...videoData];
+  updateVideoBodyList()
   let table;
   $('#modal-select-video').on('show.bs.modal', function(e) {
     if ($.fn.dataTable.isDataTable('#video-table')) {
@@ -229,19 +232,15 @@
           data: 'created_at',
           name: 'created_at'
         },
-        {
-          data: 'action',
-          name: 'action'
-        },
       ],
-      // createdRow: function(row, data, dataIndex) {
-      //   $(row).data('vimeo-id', data['vimeo_id'])
-      //   if (vimeoIdSelectedList.includes(data['vimeo_id'])) {
-      //     $(row).addClass('has-selected');
-      //     $(row).find('.form-checkbox-input').prop('checked', true);
-      //     $(row).find('.form-checkbox-input').attr('disabled', true)
-      //   }
-      // }
+      createdRow: function(row, data, dataIndex) {
+        $(row).data('video-id', data['vimeo_id'])
+        if (vimeoIdSelectedList.includes(data['vimeo_id'])) {
+          $(row).addClass('has-selected');
+          $(row).find('.form-checkbox-input').prop('checked', true);
+          $(row).find('.form-checkbox-input').attr('disabled', true)
+        }
+      }
     });
   })
 
@@ -259,8 +258,8 @@
     showVideoDetail(id);
   });
 
-  let checkedData = [];
-  $('.table-result').addClass('hidden')
+
+  // $('.table-result').addClass('hidden')
   $('.btn-select-course-video').on('click', function() {
     $('#video-table .form-checkbox-input:checked').each(function() {
       var row = $(this).closest('tr');
@@ -355,32 +354,15 @@
       }
     });
   }
-
-  function handleDelThumbnail(postId) {
-      $.ajax({
-        url: '/posts/delete-img/' + postId,
-        type: 'post',
-        data: {
-          "_token": $('meta[name="csrf-token"]').attr('content'),
-          "id": postId
-        },
-        success: function(response) {
-          if (response.status) {
-            console.log(response)
-            handlerFilter()
-            const msgDeleteSuccess = "<?php echo __('post.message.delete_post_success') ?>"
-            Swal.fire(msgDeleteSuccess, '', 'success')
-          } else {
-            Swal.fire('fail!', response.message, '')
-          }
-        }
-      });
-    }
-
-    $("#input-pd").on('click', '.fileinput-remove', function(event, key, jqXHR, data) {
-      console.log("File đã bị xóa:", key);
-      var postId = $('#id').val();
-      handleDelThumbnail(postId)
-    });
 </script>
+@stop
+
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<!-- <link rel="stylesheet" href="{{ asset('css/receipt.add.css') }}"> -->
+<style lang="css">
+  .hidden {
+    display: none;
+  }
+</style>
 @stop
