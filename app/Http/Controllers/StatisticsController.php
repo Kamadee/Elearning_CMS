@@ -99,7 +99,7 @@ class StatisticsController extends Controller
       $monthlyRevenue[$data->month] = $data->total / 1000000;
     }
 
-    $topPurchasedCourses = Course::withCount('items')->get();
+    $topPurchasedCourses = $this->topPurchasedCourses();
 
     $revenueCategory = OrderItem::select('categories.category_name', DB::raw('SUM(order_items.price) as total_revenue'))
       ->join('courses', 'order_items.course_id', '=', 'courses.id')
@@ -146,6 +146,36 @@ class StatisticsController extends Controller
       'categories' => $categories,
       'monthlyCustomer' => $monthlyCustomer
     ];
+  }
+
+  public function topPurchasedCourses()
+  {
+    return Course::query()
+      ->select([
+        'courses.id',
+        'courses.thumbnail',
+        'courses.title',
+        'courses.author',
+        'courses.original_price',
+        'courses.sale_off_price',
+        DB::raw('SUM(order_items.quantity) as items_count'),
+      ])
+      ->join('order_items', 'order_items.course_id', '=', 'courses.id')
+      ->join('orders', 'orders.id', '=', 'order_items.order_id')
+      ->where('orders.status', Config::get('constants.order_status.completed'))
+      ->groupBy([
+        'courses.id',
+        'courses.thumbnail',
+        'courses.title',
+        'courses.author',
+        'courses.original_price',
+        'courses.sale_off_price',
+      ])
+      ->havingRaw('SUM(order_items.quantity) >= 1')
+      ->orderByDesc('items_count')
+      ->orderBy('courses.id')
+      ->limit(10)
+      ->get();
   }
 
   public function statisticsPage()

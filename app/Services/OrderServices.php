@@ -15,8 +15,7 @@ class OrderServices
     $queries = Order::with('orderItems', 'courses');
     if (isset($filterData['code']) && $filterData['code']) {
       $queries->where(function ($q) use ($filterData) {
-        $likeStr = "%" . Helper::escapeLike($filterData["code"]) . "%";
-        $q->where('orders.code', 'like', $likeStr);
+        $q->where('orders.code', $filterData['code']);
       });
     }
     if (isset($filterData['statusList']) && count($filterData['statusList']) > 0) {
