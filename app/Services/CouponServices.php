@@ -245,7 +245,7 @@ class CouponServices
         $updated = Coupon::where('code', $couponCode)
             ->where(function ($q) {
                 $q->where('max_uses', 0)
-                  ->orWhereColumn('uses', '<', 'max_uses');
+                    ->orWhereColumn('uses', '<', 'max_uses');
             })
             ->increment('uses');
 
@@ -283,16 +283,16 @@ class CouponServices
                     $sub->where('type', 'course')
                         ->where('course_id', $courseId);
                 })
-                ->orWhere('type', 'system');
+                    ->orWhere('type', 'system');
             })
             ->where(function ($q) use ($now) {
                 $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', $now);
+                    ->orWhere('expires_at', '>', $now);
             })
             ->where(function ($q) {
                 $q->whereNull('max_uses')
-                  ->orWhere('max_uses', '=', 0)
-                  ->orWhereColumn('uses', '<', 'max_uses');
+                    ->orWhere('max_uses', '=', 0)
+                    ->orWhereColumn('uses', '<', 'max_uses');
             })
             ->get();
     }
